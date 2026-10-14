@@ -1,0 +1,15 @@
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+SQLAlchemy==2.0.43
+PyMySQL==1.1.1
+alembic==1.16.4
+pydantic==2.11.7
+pydantic-settings==2.10.1
+email-validator
+python-multipart
+PyJWT
+passlib[bcrypt]
+bcrypt==4.0.1
+APScheduler
+pytest
+httpx

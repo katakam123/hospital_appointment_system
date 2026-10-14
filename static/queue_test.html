@@ -1,0 +1,91 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Live Queue Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 850px; margin: 30px auto; padding: 0 16px; }
+        input, button { padding: 10px; margin: 5px 0; }
+        input { width: 100%; box-sizing: border-box; }
+        button { cursor: pointer; }
+        #messages { background: #f4f4f4; padding: 12px; min-height: 180px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    </style>
+</head>
+<body>
+    <h2>Hospital Live Queue Test</h2>
+
+    <label for="token">Access token (without the word Bearer)</label>
+    <input id="token" type="password" placeholder="Paste access token">
+
+    <label for="doctorId">Doctor ID</label>
+    <input id="doctorId" type="number" value="1" min="1">
+
+    <button onclick="connectQueue()">Connect to Queue</button>
+    <button onclick="connectNotifications()">Connect Notifications</button>
+    <button onclick="disconnectSocket()">Disconnect</button>
+
+    <h3>Connection and live messages</h3>
+    <div id="messages"></div>
+
+    <script>
+        let socket = null;
+
+        function log(message) {
+            const box = document.getElementById("messages");
+            box.textContent += new Date().toLocaleTimeString()
+                + " - " + message + "\n";
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function openSocket(path) {
+            disconnectSocket();
+
+            const token = document.getElementById("token").value.trim();
+            if (!token) {
+                log("Please enter an access token.");
+                return;
+            }
+
+            const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+            const url = `${protocol}//${location.host}${path}?token=${encodeURIComponent(token)}`;
+
+            socket = new WebSocket(url);
+
+            socket.onopen = () => log("WebSocket connected.");
+            socket.onmessage = (event) => {
+                try {
+                    log(JSON.stringify(JSON.parse(event.data), null, 2));
+                } catch {
+                    log(event.data);
+                }
+            };
+            socket.onerror = () => log("WebSocket error. Check the server terminal.");
+            socket.onclose = (event) => log(
+                `WebSocket closed: code=${event.code}, reason=${event.reason || "none"}`
+            );
+        }
+
+        function connectQueue() {
+            const doctorId = document.getElementById("doctorId").value;
+            if (!doctorId) {
+                log("Enter a doctor ID.");
+                return;
+            }
+            openSocket(`/ws/queue/${encodeURIComponent(doctorId)}`);
+        }
+
+        function connectNotifications() {
+            openSocket("/ws/notifications");
+        }
+
+        function disconnectSocket() {
+            if (socket) {
+                socket.close();
+                socket = null;
+            }
+        }
+    </script>
+</body>
+</html>
